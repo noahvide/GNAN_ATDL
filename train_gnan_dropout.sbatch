@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 #SBATCH -J gnan_dropout
-#SBATCH -p cpu
 #SBATCH -c 8
 #SBATCH --mem=16G
 #SBATCH --time=2-00:00:00
