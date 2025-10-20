@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 #SBATCH -J gnan_dropout
-#SBATCH -p gpu
-#SBATCH --gres=gpu:1
+#SBATCH -p cpu
 #SBATCH -c 8
 #SBATCH --mem=16G
-#SBATCH -t 04:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --array=0-2
 #SBATCH -o logs/gnan_dropout_%j_%a.out
 #SBATCH -e logs/gnan_dropout_%j_%a.err

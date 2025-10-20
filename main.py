@@ -173,21 +173,6 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                     os.makedirs(f'models')
                 torch.save(model.state_dict(),
                             f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_acc.pt')
-                # best_val_acc_model_test_loss, best_val_acc_model_test_acc, _ = trainer.test_epoch(model,
-                #                                                                                     dloader=test_loader,
-                #                                                                                     loss_fn=loss,
-                #                                                                                     classify=~is_regression,
-                #                                                                                     device=device,
-                #                                                                                     compute_auc=compute_auc,
-                #                                                                                     is_graph_task=is_graph_task)
-
-                # print(f'Best Val Acc Model Test Acc: {best_val_acc_model_test_acc:.4f}\n'
-                #         f'Best Val Acc Model Test Loss: {best_val_acc_model_test_loss:.4f}\n'
-                #         f'Best Val Acc Model Val Acc: {val_acc:.4f}\n'
-                #         f'Best Val Acc Model Val Loss: {val_loss:.4f}\n'
-                #         f'Best Val Acc Model Train Acc: {train_acc:.4f}\n'
-                #         f'Best Val Acc Model Train Loss: {train_loss:.4f}\n')
-
 
             if val_loss < best_val_loss:
                 print("[INFO] New best validation Loss")
@@ -201,28 +186,11 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                     "val_acc": val_acc
                 }, f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_loss.pt')
 
-                # best_val_loss_model_test_loss, best_val_loss_model_test_acc, _ = trainer.test_epoch(
-                #     model,
-                #     dloader=test_loader,
-                #     loss_fn=loss,
-                #     classify=~is_regression,
-                #     device=device, compute_auc=compute_auc, is_graph_task=is_graph_task)
-
-                # print(f'Best Val Loss Model Test Acc: {best_val_loss_model_test_acc:.4f}\n'
-                #       f'Best Val Loss Model Test Loss: {best_val_loss_model_test_loss:.4f}\n'
-                #       f'Best Val Loss Model Val Acc: {val_acc:.4f}\n'
-                #       f'Best Val Loss Model Val Loss: {val_loss:.4f}\n'
-                #       f'Best Val Loss Model Train Acc: {train_acc:.4f}\n'
-                #       f'Best Val Loss Model Train Loss: {best_val_loss:.4f}\n'
-                #       )
-
 
             test_loss, test_acc, _ = trainer.test_epoch(model, dloader=test_loader,
                                                                loss_fn=loss, classify=not is_regression,
                                                                device=device, compute_auc=compute_auc,
                                                                is_graph_task=is_graph_task)
-
-            # model.print_m_params()
             
             print(f'Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f}')
             print(f'Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}')
