@@ -4,3 +4,5 @@ torch_geometric
 wandb
 scikit-learn
 ogb
+ipykernel
+matplotlib
