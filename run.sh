@@ -6,7 +6,7 @@ seed=0
 num_epochs=1000
 wd=0
 dropout=0.6
-lr=0.01
+lr=0.001
 n_layers=3
 hidden_channels=64
 

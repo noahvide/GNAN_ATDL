@@ -154,13 +154,11 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
         )
         for epoch in range(num_epochs):
             print(f"[INFO] Epoch {epoch}/{num_epochs}")
-            print("training...")
             train_loss, train_acc, train_auc = trainer.train_epoch(model, dloader=train_loader,
                                                                    loss_fn=loss,
                                                                    optimizer=optimizer,
                                                                    classify=~is_regression, device=device,
                                                                    compute_auc=compute_auc, is_graph_task=is_graph_task)
-            print("validating...")
             val_loss, val_acc, val_auc = trainer.test_epoch(model, dloader=val_loader,
                                                             loss_fn=loss, classify=~is_regression,
                                                             device=device, val_mask=True, compute_auc=compute_auc,
@@ -203,7 +201,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                 if val_acc > best_val_acc_model_val_acc:
                     print("[INFO] New best validation Accuracy")
 
-                    best_val_acc_model_val_acc = val_loss
+                    best_val_acc_model_val_acc = val_acc
                     if not os.path.exists('models'):
                         os.makedirs(f'models')
                     torch.save(model.state_dict(),

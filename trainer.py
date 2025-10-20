@@ -2,6 +2,8 @@ import torch
 from sklearn.metrics import roc_auc_score
 import numpy as np
 
+from tqdm import tqdm
+
 def get_accuracy(outputs, labels):
 
     if outputs.dim() == 2 and outputs.shape[-1] > 1:
@@ -28,7 +30,7 @@ def train_epoch(model, dloader, loss_fn, optimizer, device, classify=True, label
         all_labels = np.array([])
         if classify:
             running_acc = 0.0
-        for i, data in enumerate(dloader):
+        for data in tqdm(dloader, desc="Training", leave=False):
             if len(data.y.shape) > 1:
                 labels = data.y[:, label_index].view(-1, 1).flatten()
                 labels = labels.float()
@@ -95,7 +97,7 @@ def test_epoch(model, dloader, loss_fn, device, classify=True, label_index=0, co
         if classify:
             running_acc = 0.0
         model.eval()
-        for i, data in enumerate(dloader):
+        for data in dloader:
             if len(data.y.shape) > 1:
                 labels = data.y[:, label_index].view(-1, 1).flatten()
                 labels = labels.float()
