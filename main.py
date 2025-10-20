@@ -190,7 +190,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
 
             if val_loss < best_val_loss:
-                print("[INFO] New best validation Accuracy")
+                print("[INFO] New best validation Loss")
                 best_val_loss = val_loss
                 if not os.path.exists('models'):
                     os.makedirs(f'models')
@@ -224,8 +224,6 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
             # model.print_m_params()
             
-            print()
-            print(f'Epoch: {epoch:03d}')
             print(f'Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f}')
             print(f'Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}')
             print(f'Test Loss: {test_loss:.4f} Test Acc: {test_acc:.4f}\n')
