@@ -54,7 +54,7 @@ stdbuf -oL -eL python -u main.py \
   --dropout "${DROPOUT}" \
   --n_layers 3 \
   --hidden_channels 64 \
-  --lr 0.01 \
+  --lr 0.001 \
   --num_epochs 1000 \
   --wandb_flag 0 \
   --early_stop 1 \
