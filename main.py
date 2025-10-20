@@ -141,9 +141,8 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
         optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=wd)
         loss = loss_type()
         early_stop = EarlyStopping(metric_name='Loss', patience=patience, min_is_better=True)
-        best_val_acc_model_val_acc = 0
-        best_val_acc_model_val_auc = 0
-        best_train_loss_model_train_loss = math.inf
+        best_val_acc = 0
+        best_val_loss = math.inf
 
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
@@ -154,135 +153,82 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
         )
         for epoch in range(num_epochs):
             print(f"[INFO] Epoch {epoch}/{num_epochs}")
-            train_loss, train_acc, train_auc = trainer.train_epoch(model, dloader=train_loader,
+            train_loss, train_acc, _ = trainer.train_epoch(model, dloader=train_loader,
                                                                    loss_fn=loss,
                                                                    optimizer=optimizer,
                                                                    classify=~is_regression, device=device,
                                                                    compute_auc=compute_auc, is_graph_task=is_graph_task)
-            val_loss, val_acc, val_auc = trainer.test_epoch(model, dloader=val_loader,
+            val_loss, val_acc, _ = trainer.test_epoch(model, dloader=val_loader,
                                                             loss_fn=loss, classify=~is_regression,
                                                             device=device, val_mask=True, compute_auc=compute_auc,
                                                             is_graph_task=is_graph_task)
 
             scheduler.step(train_loss)
-            if compute_auc:
-                if val_auc > best_val_acc_model_val_auc:
-                    print("[INFO] New best validation AUC")
-                    best_val_acc_model_val_auc = val_auc
-                    if not os.path.exists('models'):
-                        os.makedirs(f'models')
-                    torch.save(model.state_dict(),
-                               f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_auc.pt')
-                    best_val_auc_epoch = epoch
-                    best_val_acc_model_test_loss, best_val_acc_model_test_acc, best_val_acc_model_test_auc = trainer.test_epoch(
-                        model,
-                        dloader=test_loader,
-                        loss_fn=loss,
-                        classify=~is_regression,
-                        device=device, compute_auc=compute_auc, is_graph_task=is_graph_task)
-                    print(f'Best Val AUC Model Test Acc: {best_val_acc_model_test_acc:.4f}\n'
-                          f'Best Val AUC Model Test Loss: {best_val_acc_model_test_loss:.4f}\n'
-                          f'Best Val AUC Model Val Acc: {val_acc:.4f}\n'
-                          f'Best Val AUC Model Val Loss: {val_loss:.4f}\n'
-                          f'Best Val AUC Model Train Acc: {train_acc:.4f}\n'
-                          f'Best Val AUC Model Train Loss: {train_loss:.4f}\n')
-                    if wandb_flag:
-                        wandb.log({
-                            'best_val_auc_model_test_acc': best_val_acc_model_test_acc,
-                            'best_val_auc_model_test_loss': best_val_acc_model_test_loss,
-                            'best_val_auc_epoch': best_val_auc_epoch,
-                            'best_val_auc_model_val_acc': val_acc,
-                            'best_val_auc_model_val_loss': val_loss,
-                            'best_val_auc_model_train_acc': train_acc,
-                            'best_val_auc_model_train_loss': train_loss
-                        })
 
-            else:
-                if val_acc > best_val_acc_model_val_acc:
-                    print("[INFO] New best validation Accuracy")
+            if val_acc > best_val_acc:
+                print("[INFO] New best validation Accuracy")
 
-                    best_val_acc_model_val_acc = val_acc
-                    if not os.path.exists('models'):
-                        os.makedirs(f'models')
-                    torch.save(model.state_dict(),
-                               f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_acc.pt')
-                    best_val_acc_epoch = epoch
-                    best_val_acc_model_test_loss, best_val_acc_model_test_acc, _ = trainer.test_epoch(model,
-                                                                                                      dloader=test_loader,
-                                                                                                      loss_fn=loss,
-                                                                                                      classify=~is_regression,
-                                                                                                      device=device,
-                                                                                                      compute_auc=compute_auc,
-                                                                                                      is_graph_task=is_graph_task)
-
-                    print(f'Best Val Acc Model Test Acc: {best_val_acc_model_test_acc:.4f},'
-                          f'Best Val Acc Model Test Loss: {best_val_acc_model_test_loss:.4f},'
-                          f'Best Val Acc Model Val Acc: {val_acc:.4f},'
-                          f'Best Val Acc Model Val Loss: {val_loss:.4f},'
-                          f'Best Val Acc Model Train Acc: {train_acc:.4f},'
-                          f'Best Val Acc Model Train Loss: {train_loss:.4f}')
-
-                    if wandb_flag:
-                        wandb.log({
-                            'best_val_acc_model_test_acc': best_val_acc_model_test_acc,
-                            'best_val_acc_model_test_loss': best_val_acc_model_test_loss,
-                            'best_val_acc_epoch': best_val_acc_epoch,
-                            'best_val_acc_model_val_acc': val_acc,
-                            'best_val_acc_model_val_loss': val_loss,
-                            'best_val_acc_model_train_acc': train_acc,
-                            'best_val_acc_model_train_loss': train_loss
-                        })
-
-            if train_loss < best_train_loss_model_train_loss:
-                best_train_loss_model_train_loss = train_loss
+                best_val_acc = val_acc
                 if not os.path.exists('models'):
                     os.makedirs(f'models')
                 torch.save(model.state_dict(),
-                           f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_train_loss.pt')
-                best_train_loss_epoch = epoch
-                best_train_loss_model_test_loss, best_train_loss_model_test_acc, best_train_loss_model_test_auc = trainer.test_epoch(
-                    model,
-                    dloader=test_loader,
-                    loss_fn=loss,
-                    classify=~is_regression,
-                    device=device, compute_auc=compute_auc, is_graph_task=is_graph_task)
+                            f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_acc.pt')
+                # best_val_acc_model_test_loss, best_val_acc_model_test_acc, _ = trainer.test_epoch(model,
+                #                                                                                     dloader=test_loader,
+                #                                                                                     loss_fn=loss,
+                #                                                                                     classify=~is_regression,
+                #                                                                                     device=device,
+                #                                                                                     compute_auc=compute_auc,
+                #                                                                                     is_graph_task=is_graph_task)
 
-                print(f'Best Train Loss Model Test Acc: {best_train_loss_model_test_acc:.4f},'
-                      f'Best Train Loss Model Test Loss: {best_train_loss_model_test_loss:.4f},'
-                      f'Best Train Loss Model Val Acc: {val_acc:.4f},'
-                      f'Best Train Loss Model Val Loss: {val_loss:.4f},'
-                      f'Best Train Loss Model Train Acc: {train_acc:.4f},'
-                      f'Best Train Loss Model Train Loss: {best_train_loss_model_train_loss:.4f}',
-                      f'Best Train Loss Model Test AUC: {best_train_loss_model_test_auc:.4f}',
-                      f'Best Train Loss Model Val AUC: {val_auc:.4f}',
-                      f'Best Train Loss Model Train AUC: {train_auc:.4f}')
+                # print(f'Best Val Acc Model Test Acc: {best_val_acc_model_test_acc:.4f}\n'
+                #         f'Best Val Acc Model Test Loss: {best_val_acc_model_test_loss:.4f}\n'
+                #         f'Best Val Acc Model Val Acc: {val_acc:.4f}\n'
+                #         f'Best Val Acc Model Val Loss: {val_loss:.4f}\n'
+                #         f'Best Val Acc Model Train Acc: {train_acc:.4f}\n'
+                #         f'Best Val Acc Model Train Loss: {train_loss:.4f}\n')
 
-                if wandb_flag:
-                    wandb.log({
-                        'best_train_loss_model_test_acc': best_train_loss_model_test_acc,
-                        'best_train_loss_model_test_loss': best_train_loss_model_test_loss,
-                        'best_train_loss_epoch': best_train_loss_epoch,
-                        'best_train_loss_model_val_acc': val_acc,
-                        'best_train_loss_model_val_loss': val_loss,
-                        'best_train_loss_model_train_acc': train_acc,
-                        'best_train_loss_model_train_loss': train_loss,
-                        'best_train_loss_model_test_auc': best_train_loss_model_test_auc,
-                        'best_train_loss_model_val_auc': val_auc,
-                        'best_train_loss_model_train_auc': train_auc
-                    })
 
-            test_loss, test_acc, test_auc = trainer.test_epoch(model, dloader=test_loader,
-                                                               loss_fn=loss, classify=~is_regression,
+            if val_loss < best_val_loss:
+                print("[INFO] New best validation Accuracy")
+                best_val_loss = val_loss
+                if not os.path.exists('models'):
+                    os.makedirs(f'models')
+                torch.save({
+                    "epoch": epoch,
+                    "state_dict": model.state_dict(),
+                    "val_loss": val_loss,
+                    "val_acc": val_acc
+                }, f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_loss.pt')
+
+                # best_val_loss_model_test_loss, best_val_loss_model_test_acc, _ = trainer.test_epoch(
+                #     model,
+                #     dloader=test_loader,
+                #     loss_fn=loss,
+                #     classify=~is_regression,
+                #     device=device, compute_auc=compute_auc, is_graph_task=is_graph_task)
+
+                # print(f'Best Val Loss Model Test Acc: {best_val_loss_model_test_acc:.4f}\n'
+                #       f'Best Val Loss Model Test Loss: {best_val_loss_model_test_loss:.4f}\n'
+                #       f'Best Val Loss Model Val Acc: {val_acc:.4f}\n'
+                #       f'Best Val Loss Model Val Loss: {val_loss:.4f}\n'
+                #       f'Best Val Loss Model Train Acc: {train_acc:.4f}\n'
+                #       f'Best Val Loss Model Train Loss: {best_val_loss:.4f}\n'
+                #       )
+
+
+            test_loss, test_acc, _ = trainer.test_epoch(model, dloader=test_loader,
+                                                               loss_fn=loss, classify=not is_regression,
                                                                device=device, compute_auc=compute_auc,
                                                                is_graph_task=is_graph_task)
 
             # model.print_m_params()
             
             print()
-            print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}\n'
-                  f'Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}\n'
-                  f'Val Acc: {val_acc:.4f}', f'Test Loss: {test_loss:.4f}\n'
-                                             f'Test Acc: {test_acc:.4f}\n')
+            print(f'Epoch: {epoch:03d}')
+            print(f'Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f}')
+            print(f'Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}')
+            print(f'Test Loss: {test_loss:.4f} Test Acc: {test_acc:.4f}\n')
             
             # --- Save metrics locally to CSV ---
             log_filename = f"training_log_{unique_run_id}.csv"
@@ -317,7 +263,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
         # test
         test_loss, test_acc, test_auc = trainer.test_epoch(model, dloader=test_loader,
-                                                           loss_fn=loss, classify=~is_regression,
+                                                           loss_fn=loss, classify=not is_regression,
                                                            device=device, compute_auc=compute_auc,
                                                            is_graph_task=is_graph_task)
         print(f'Test Loss: {test_loss:.4f}, '
