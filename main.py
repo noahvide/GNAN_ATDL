@@ -153,11 +153,14 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             min_lr=1e-8,
         )
         for epoch in range(num_epochs):
+            print(f"[INFO] Epoch {epoch}/{num_epochs}")
+            print("training...")
             train_loss, train_acc, train_auc = trainer.train_epoch(model, dloader=train_loader,
                                                                    loss_fn=loss,
                                                                    optimizer=optimizer,
                                                                    classify=~is_regression, device=device,
                                                                    compute_auc=compute_auc, is_graph_task=is_graph_task)
+            print("validating...")
             val_loss, val_acc, val_auc = trainer.test_epoch(model, dloader=val_loader,
                                                             loss_fn=loss, classify=~is_regression,
                                                             device=device, val_mask=True, compute_auc=compute_auc,
@@ -166,6 +169,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             scheduler.step(train_loss)
             if compute_auc:
                 if val_auc > best_val_acc_model_val_auc:
+                    print("[INFO] New best validation AUC")
                     best_val_acc_model_val_auc = val_auc
                     if not os.path.exists('models'):
                         os.makedirs(f'models')
@@ -178,12 +182,12 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                         loss_fn=loss,
                         classify=~is_regression,
                         device=device, compute_auc=compute_auc, is_graph_task=is_graph_task)
-                    print(f'Best Val AUC Model Test Acc: {best_val_acc_model_test_acc:.4f},'
-                          f'Best Val AUC Model Test Loss: {best_val_acc_model_test_loss:.4f},'
-                          f'Best Val AUC Model Val Acc: {val_acc:.4f},'
-                          f'Best Val AUC Model Val Loss: {val_loss:.4f},'
-                          f'Best Val AUC Model Train Acc: {train_acc:.4f},'
-                          f'Best Val AUC Model Train Loss: {train_loss:.4f}')
+                    print(f'Best Val AUC Model Test Acc: {best_val_acc_model_test_acc:.4f}\n'
+                          f'Best Val AUC Model Test Loss: {best_val_acc_model_test_loss:.4f}\n'
+                          f'Best Val AUC Model Val Acc: {val_acc:.4f}\n'
+                          f'Best Val AUC Model Val Loss: {val_loss:.4f}\n'
+                          f'Best Val AUC Model Train Acc: {train_acc:.4f}\n'
+                          f'Best Val AUC Model Train Loss: {train_loss:.4f}\n')
                     if wandb_flag:
                         wandb.log({
                             'best_val_auc_model_test_acc': best_val_acc_model_test_acc,
@@ -197,6 +201,8 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
             else:
                 if val_acc > best_val_acc_model_val_acc:
+                    print("[INFO] New best validation Accuracy")
+
                     best_val_acc_model_val_acc = val_loss
                     if not os.path.exists('models'):
                         os.makedirs(f'models')
@@ -273,10 +279,27 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                                                                is_graph_task=is_graph_task)
 
             # model.print_m_params()
-            print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}, '
-                  f'Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, '
-                  f'Val Acc: {val_acc:.4f}', f'Test Loss: {test_loss:.4f}, '
-                                             f'Test Acc: {test_acc:.4f}')
+            
+            print()
+            print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}\n'
+                  f'Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}\n'
+                  f'Val Acc: {val_acc:.4f}', f'Test Loss: {test_loss:.4f}\n'
+                                             f'Test Acc: {test_acc:.4f}\n')
+            
+            # --- Save metrics locally to CSV ---
+            log_filename = f"training_log_{unique_run_id}.csv"
+            header = "epoch,train_loss,val_loss,train_acc,val_acc,test_loss,test_acc\n"
+            row = f"{epoch},{train_loss:.6f},{val_loss:.6f},{train_acc:.6f},{val_acc:.6f},{test_loss:.6f},{test_acc:.6f}\n"
+
+            # Write header only once (when the file is first created)
+            if not os.path.exists(log_filename):
+                with open(log_filename, "w") as f:
+                    f.write(header)
+
+            # Append new row for each epoch
+            with open(log_filename, "a") as f:
+                f.write(row)
+            
             early_stop(val_loss)
             if train_loss < loss_thresh:
                 print(f'loss under {loss_thresh} at epoch: {epoch}')
