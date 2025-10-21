@@ -114,7 +114,7 @@ def get_data(data_name, processed_data_dir='processed_data', seed_index=0):
             data = torch.load(f'{processed_data_dir}/{data_name}.pt')
         else:
             dataset = load_pubmed()
-            data = dataset[0]
+            data = dataset
             pre_process(data, False, data_name, processed_data_dir=processed_data_dir)
         is_graph_task = False
         is_regression = False

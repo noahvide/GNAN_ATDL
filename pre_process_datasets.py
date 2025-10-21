@@ -6,6 +6,8 @@ from scipy.sparse.csgraph import floyd_warshall, dijkstra
 import scipy
 import threading
 
+from tqdm import tqdm
+
 
 def parallel_pre_process(data, is_graph_task, data_name, processed_data_dir='processed_data'):
     print(f'Preprocessing {data_name} dataset')
@@ -134,7 +136,7 @@ def pre_process(data, is_graph_task, data_name, processed_data_dir='processed_da
 
         # count unique values in node_distances
         normalization_matrix = node_distances.clone()
-        for i, entry in enumerate(node_distances):
+        for i, entry in tqdm(enumerate(node_distances), total=len(node_distances), desc="FOR-Loop"):
             distances_counts = torch.unique(entry, return_counts=True)
             normalization_matrix[i].apply_(
                 lambda x: distances_counts[1][(distances_counts[0].float() == x).nonzero().item()])
