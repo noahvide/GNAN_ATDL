@@ -6,3 +6,5 @@ scikit-learn
 ogb
 ipykernel
 matplotlib
+seaborn
+igraph
