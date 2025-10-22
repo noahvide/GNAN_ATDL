@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-#SBATCH -J gnan_pubmed
+#SBATCH -J gnan_cora
 #SBATCH -p gpu --gres=gpu:a100:1
 #SBATCH -c 8
 #SBATCH --mem=16G
 #SBATCH --time=2-00:00:00
-#SBATCH -o logs/gnan_pubmed_%j.out
-#SBATCH -e logs/gnan_pubmed_%j.err
+#SBATCH -o logs/gnan_cora_%j.out
+#SBATCH -e logs/gnan_cora_%j.err
 #SBATCH --chdir=/home/thf796/Graph-Neural-Additive-Networks---GNAN
 
 set -euo pipefail
@@ -45,7 +45,7 @@ stdbuf -oL -eL python -u main.py \
   --seed 0 \
   --wd 0 \
   --model_name gnan \
-  --data_name pubmed \
+  --data_name cora \
   --dropout 0.6 \
   --n_layers 3 \
   --hidden_channels 64 \
@@ -57,6 +57,6 @@ stdbuf -oL -eL python -u main.py \
 
 # Print a quick summary from the log lines emitted by main.py
 echo "[SUMMARY] tail of metrics:"
-grep -E 'Best Val Acc Model|Best Train Loss Model|^Epoch:|^Test Loss:' -n logs/gnan_pubmed_${SLURM_JOB_ID}.out || true
+grep -E 'Best Val Acc Model|Best Train Loss Model|^Epoch:|^Test Loss:' -n logs/gnan_cora_${SLURM_JOB_ID}.out || true
 
 echo "[$(date)] Done job ${SLURM_JOB_ID}"
