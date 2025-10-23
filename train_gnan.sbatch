@@ -46,7 +46,7 @@ stdbuf -oL -eL python -u main.py \
   --wd 0 \
   --model_name gnan \
   --data_name cora \
-  --dropout 0.6 \
+  --dropout 0.3 \
   --n_layers 3 \
   --hidden_channels 64 \
   --lr 0.001 \
